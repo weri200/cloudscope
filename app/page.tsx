@@ -14,7 +14,7 @@ const metricDefs:Metric[]=[
  {key:"functions",name:"Cloud Functions 실행",group:"Firebase",type:"cloudfunctions.googleapis.com/function/execution_count",unit:"회",color:"#11a879",status:"idle"},
  {key:"hosting",name:"Firebase Hosting 전송량",group:"Firebase",type:"firebasehosting.googleapis.com/network/sent_bytes_count",unit:"B",color:"#ea4335",status:"idle"},
 ];
-const scopes="https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/cloud-billing.readonly";
+const scopes="https://www.googleapis.com/auth/cloud-platform.read-only https://www.googleapis.com/auth/monitoring.read https://www.googleapis.com/auth/cloud-billing.readonly";
 const compact=(n:number,unit:string)=>{if(unit==="B"){if(n>1e9)return `${(n/1e9).toFixed(1)} GB`;if(n>1e6)return `${(n/1e6).toFixed(1)} MB`}return new Intl.NumberFormat("ko-KR",{notation:n>9999?"compact":"standard",maximumFractionDigits:1}).format(n)+unit};
 
 export default function Home(){
