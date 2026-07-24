@@ -4,6 +4,8 @@ import {
   calculateMetricValue,
   classifyService,
   formatMetricValue,
+  freeTierForPeriod,
+  freeTierPercent,
   metricDefinitions,
   serviceUsageUrl,
 } from "../app/cloud-usage.ts";
@@ -72,4 +74,24 @@ test("서비스 카드는 선택 프로젝트의 API 사용량 페이지로 연�
     serviceUsageUrl("firestore.googleapis.com", ""),
     "https://console.cloud.google.com/apis/api/firestore.googleapis.com/metrics",
   );
+});
+
+test("무료 한도를 일·월·고정 주기에 맞춰 선택 기간으로 환산한다", () => {
+  const reads = metricDefinitions.find(
+    (definition) => definition.key === "firestore-reads",
+  );
+  const run = metricDefinitions.find(
+    (definition) => definition.key === "cloud-run-requests",
+  );
+  const storage = metricDefinitions.find(
+    (definition) => definition.key === "storage-size",
+  );
+
+  assert.ok(reads);
+  assert.ok(run);
+  assert.ok(storage);
+  assert.equal(freeTierForPeriod(reads, 7), 350_000);
+  assert.equal(freeTierForPeriod(storage, 7), 5_000_000_000);
+  assert.equal(Math.round(freeTierForPeriod(run, 7)), 466_667);
+  assert.equal(freeTierPercent(175_000, reads, 7), 50);
 });

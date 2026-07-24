@@ -1,6 +1,13 @@
 export type ServiceGroup = "Firebase" | "Google Cloud" | "시스템";
 export type MetricUnit = "count" | "bytes";
 export type MetricReducer = "sum" | "latest";
+export type FreeTierCycle = "daily" | "monthly" | "fixed";
+
+export type FreeTier = {
+  amount: number;
+  cycle: FreeTierCycle;
+  note?: string;
+};
 
 export type MetricDefinition = {
   key: string;
@@ -11,6 +18,7 @@ export type MetricDefinition = {
   unit: MetricUnit;
   color: string;
   reducer: MetricReducer;
+  freeTier: FreeTier;
 };
 
 export type MetricStatus =
@@ -60,6 +68,7 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "count",
     color: "#f7a21b",
     reducer: "sum",
+    freeTier: { amount: 50_000, cycle: "daily" },
   },
   {
     key: "firestore-writes",
@@ -70,6 +79,7 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "count",
     color: "#ff6d45",
     reducer: "sum",
+    freeTier: { amount: 20_000, cycle: "daily" },
   },
   {
     key: "storage-size",
@@ -80,6 +90,11 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "bytes",
     color: "#4285f4",
     reducer: "latest",
+    freeTier: {
+      amount: 5_000_000_000,
+      cycle: "fixed",
+      note: "미국 지원 리전 기준",
+    },
   },
   {
     key: "cloud-run-requests",
@@ -90,6 +105,7 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "count",
     color: "#7b61ff",
     reducer: "sum",
+    freeTier: { amount: 2_000_000, cycle: "monthly" },
   },
   {
     key: "functions-executions",
@@ -100,6 +116,7 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "count",
     color: "#11a879",
     reducer: "sum",
+    freeTier: { amount: 2_000_000, cycle: "monthly" },
   },
   {
     key: "hosting-egress",
@@ -110,6 +127,7 @@ export const metricDefinitions: MetricDefinition[] = [
     unit: "bytes",
     color: "#ea4335",
     reducer: "sum",
+    freeTier: { amount: 10_000_000_000, cycle: "monthly" },
   },
 ];
 
@@ -219,6 +237,45 @@ export function serviceUsageUrl(
   return projectId
     ? `${baseUrl}?project=${encodeURIComponent(projectId)}`
     : baseUrl;
+}
+
+export function freeTierForPeriod(
+  definition: MetricDefinition,
+  days: number,
+): number {
+  if (definition.freeTier.cycle === "daily") {
+    return definition.freeTier.amount * days;
+  }
+
+  if (definition.freeTier.cycle === "monthly") {
+    return definition.freeTier.amount * (days / 30);
+  }
+
+  return definition.freeTier.amount;
+}
+
+export function freeTierPercent(
+  value: number,
+  definition: MetricDefinition,
+  days: number,
+): number {
+  const allowance = freeTierForPeriod(definition, days);
+  return allowance > 0 ? (value / allowance) * 100 : 0;
+}
+
+export function freeTierPeriodLabel(
+  definition: MetricDefinition,
+  days: number,
+): string {
+  if (definition.freeTier.cycle === "daily") {
+    return days === 1 ? "오늘 무료 한도" : `${days}일 무료 한도`;
+  }
+
+  if (definition.freeTier.cycle === "monthly") {
+    return `${days}일 환산 한도`;
+  }
+
+  return "무료 저장량 기준";
 }
 
 function pointValue(point: MonitoringPoint | undefined): number {

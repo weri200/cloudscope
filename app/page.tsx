@@ -13,6 +13,9 @@ import {
   calculateMetricValue,
   enabledServiceCard,
   formatMetricValue,
+  freeTierForPeriod,
+  freeTierPercent,
+  freeTierPeriodLabel,
   initialMetricCards,
   metricDefinitions,
   serviceUsageUrl,
@@ -213,6 +216,56 @@ function statusRank(card: ServiceCard): number {
   if (card.status === "enabled") return 2;
   if (card.status === "unavailable") return 3;
   return 4;
+}
+
+function FreeTierGauge({
+  card,
+  days,
+}: {
+  card: MetricCard;
+  days: number;
+}) {
+  if (card.status !== "ready") return null;
+
+  const allowance = freeTierForPeriod(card, days);
+  const percent = freeTierPercent(card.value ?? 0, card, days);
+  const percentText =
+    percent > 0 && percent < 0.1
+      ? "<0.1%"
+      : percent >= 1000
+        ? "999%+"
+        : `${percent.toFixed(percent >= 10 ? 0 : 1)}%`;
+  const gaugeColor =
+    percent >= 100 ? "#e85b5b" : percent >= 80 ? "#e99a21" : card.color;
+
+  return (
+    <div className="quotaInfo">
+      <div>
+        <span>무료 한도 대비</span>
+        <b className={percent >= 100 ? "over" : ""}>{percentText}</b>
+      </div>
+      <div
+        className="quotaTrack"
+        role="progressbar"
+        aria-label={`${card.name} 무료 한도 사용률`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.min(Math.round(percent), 100)}
+      >
+        <i
+          style={{
+            width: `${Math.max(percent > 0 ? 1 : 0, Math.min(percent, 100))}%`,
+            background: gaugeColor,
+          }}
+        />
+      </div>
+      <small>
+        {freeTierPeriodLabel(card, days)}{" "}
+        {formatMetricValue(allowance, card.unit)}
+        {card.freeTier.note ? ` · ${card.freeTier.note}` : ""}
+      </small>
+    </div>
+  );
 }
 
 export default function Home() {
@@ -650,6 +703,11 @@ export default function Home() {
             </div>
             <strong>{visibleCards.length}개 항목</strong>
           </div>
+          <p className="quotaNotice">
+            무료 한도 비교는 대표 공식 한도를 선택 기간에 비례 환산한
+            참고값입니다. 실제 적용 범위는 요금제·리전·결제 계정에 따라 다를 수
+            있습니다.
+          </p>
 
           <div className="usageGrid">
             {visibleCards.map((card, index) => (
@@ -699,6 +757,9 @@ export default function Home() {
                       "—"
                     )}
                   </div>
+                  {card.kind === "metric" && (
+                    <FreeTierGauge card={card} days={days} />
+                  )}
                   <div className="cardFoot">
                     <span>
                       {card.status === "ready"
