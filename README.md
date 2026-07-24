@@ -6,8 +6,9 @@ Google 계정으로 직접 인증해 Google Cloud와 Firebase 프로젝트의 �
 
 ## 동작 구조
 
-- `app/page.tsx`: Google Identity Services 로그인, 프로젝트 조회, Monitoring 및
-  Billing API 조회를 담당하는 브라우저 UI
+- `app/page.tsx`: Google Identity Services 로그인, 전체 프로젝트·활성 서비스,
+  Monitoring 및 Billing API 조회를 담당하는 브라우저 UI
+- `app/cloud-usage.ts`: 서비스별 대표 지표, 단위, 합산·최신값 집계 규칙
 - `app/site-config.ts`: 환경 변수 기반의 Next/Cloudflare 브랜드 설정
 - `worker/index.ts`: vinext 앱을 Cloudflare Worker에서 실행하는 진입점
 - `firebase-dist/`: 서버 없이 Firebase Hosting에 올릴 수 있는 정적 버전
@@ -48,8 +49,15 @@ npm run dev
 `NEXT_PUBLIC_*` 값과 OAuth 클라이언트 ID는 브라우저 번들에서 공개됩니다. 여기에
 클라이언트 보안 비밀이나 서비스 계정 키를 넣으면 안 됩니다.
 
-지표를 추가하거나 제거하려면 `app/page.tsx`의 `metricDefs`를 수정합니다. 각 항목은
-Cloud Monitoring metric type, 표시 단위와 색상을 정의합니다.
+지표를 추가하거나 제거하려면 `app/cloud-usage.ts`의 `metricDefinitions`를
+수정합니다. 각 항목은 서비스 API, Cloud Monitoring metric type, 표시 단위,
+색상과 합산 방식(`sum` 또는 `latest`)을 정의합니다.
+
+대시보드는 Service Usage API로 선택한 프로젝트에서 활성화된 서비스를 페이지
+끝까지 조회합니다. 대표 Monitoring 지표가 정의된 서비스는 선택 기간의 실제
+사용량을 표시하고, 공통 사용량 지표가 정의되지 않은 서비스는 `활성화됨`으로
+표시합니다. 서비스마다 사용량 단위가 다르므로 서로 다른 지표를 하나의 총합으로
+더하지 않습니다.
 
 ## Google OAuth 준비
 
