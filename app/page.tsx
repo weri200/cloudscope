@@ -15,6 +15,7 @@ import {
   formatMetricValue,
   initialMetricCards,
   metricDefinitions,
+  serviceUsageUrl,
   type MetricCard,
   type MetricDefinition,
   type MonitoringSeries,
@@ -654,11 +655,11 @@ export default function Home() {
             {visibleCards.map((card, index) => (
               <a
                 className="serviceLink"
-                href={`https://console.cloud.google.com/apis/library/${encodeURIComponent(card.serviceApi)}${projectId ? `?project=${encodeURIComponent(projectId)}` : ""}`}
+                href={serviceUsageUrl(card.serviceApi, projectId)}
                 target="_blank"
                 rel="noopener noreferrer"
                 key={card.key}
-                aria-label={`${card.name} API 관리 페이지 열기`}
+                aria-label={`${card.name} 사용량 페이지 열기`}
               >
                 <article className="usageCard">
                   <div className="cardTop">
@@ -710,7 +711,7 @@ export default function Home() {
                           ? card.serviceApi
                           : "API 또는 지표 확인 필요"}
                     </span>
-                    <span className="consoleArrow">API 관리 ↗</span>
+                    <span className="consoleArrow">사용량 보기 ↗</span>
                   </div>
                 </article>
               </a>

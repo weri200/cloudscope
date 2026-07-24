@@ -5,6 +5,7 @@ import {
   classifyService,
   formatMetricValue,
   metricDefinitions,
+  serviceUsageUrl,
 } from "../app/cloud-usage.ts";
 
 test("누적 지표는 모든 시계열 포인트를 합산한다", () => {
@@ -60,4 +61,15 @@ test("Storage는 객체 수가 아닌 현재 저장 용량으로 정의한다", 
     "storage.googleapis.com/storage/total_bytes",
   );
   assert.equal(storage?.reducer, "latest");
+});
+
+test("서비스 카드는 선택 프로젝트의 API 사용량 페이지로 연결한다", () => {
+  assert.equal(
+    serviceUsageUrl("run.googleapis.com", "my project"),
+    "https://console.cloud.google.com/apis/api/run.googleapis.com/metrics?project=my%20project",
+  );
+  assert.equal(
+    serviceUsageUrl("firestore.googleapis.com", ""),
+    "https://console.cloud.google.com/apis/api/firestore.googleapis.com/metrics",
+  );
 });

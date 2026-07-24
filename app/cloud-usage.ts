@@ -208,6 +208,19 @@ export function formatMetricValue(value: number, unit: MetricUnit): string {
   }).format(value)}회`;
 }
 
+export function serviceUsageUrl(
+  serviceApi: string,
+  projectId: string,
+): string {
+  const baseUrl =
+    "https://console.cloud.google.com/apis/api/" +
+    `${encodeURIComponent(serviceApi)}/metrics`;
+
+  return projectId
+    ? `${baseUrl}?project=${encodeURIComponent(projectId)}`
+    : baseUrl;
+}
+
 function pointValue(point: MonitoringPoint | undefined): number {
   const value = point?.value;
   const raw =
