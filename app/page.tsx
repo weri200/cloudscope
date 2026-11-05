@@ -173,12 +173,17 @@ async function queryMetric(
 ): Promise<MetricCard> {
   const series: MonitoringSeries[] = [];
   let pageToken = "";
+  // 현재량 지표는 최근 하루만 봐야 삭제된 리소스의 옛 값이 합계에 남지 않는다.
+  const startTime =
+    definition.reducer === "latest"
+      ? new Date(end.getTime() - 86_400_000)
+      : start;
 
   try {
     do {
       const params = new URLSearchParams({
         filter: `metric.type = "${definition.metricType}"`,
-        "interval.startTime": start.toISOString(),
+        "interval.startTime": startTime.toISOString(),
         "interval.endTime": end.toISOString(),
         view: "FULL",
         pageSize: "10000",
@@ -309,6 +314,14 @@ export default function Home() {
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+
+      if (response.status === 401) {
+        // Google 토큰은 약 1시간 뒤 만료되므로 연결 상태를 해제해 다시 로그인하게 한다.
+        setToken("");
+        throw new Error(
+          "로그인 세션이 만료되었습니다. Google 계정을 다시 연결해 주세요.",
+        );
+      }
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
@@ -460,7 +473,7 @@ export default function Home() {
       },
     });
 
-    client.requestAccessToken({ prompt: "consent" });
+    client.requestAccessToken({ prompt: "" });
   };
 
   const disconnect = () => {
@@ -470,6 +483,7 @@ export default function Home() {
     }
 
     setToken("");
+    setBusy(false);
     setProjects([]);
     setProjectId("");
     setCards(initialMetricCards());
@@ -611,7 +625,7 @@ export default function Home() {
                   className={days === period ? "on" : ""}
                   onClick={() => setDays(period)}
                 >
-                  {period === 1 ? "오늘" : `${period}일`}
+                  {period === 1 ? "24시간" : `${period}일`}
                 </button>
               ))}
             </div>
@@ -766,7 +780,7 @@ export default function Home() {
                         ? card.reducer === "latest"
                           ? "현재 합계"
                           : days === 1
-                            ? "오늘 합계"
+                            ? "최근 24시간 합계"
                             : `최근 ${days}일 합계`
                         : card.status === "enabled"
                           ? card.serviceApi
