@@ -268,7 +268,7 @@ export function freeTierPeriodLabel(
   days: number,
 ): string {
   if (definition.freeTier.cycle === "daily") {
-    return days === 1 ? "오늘 무료 한도" : `${days}일 무료 한도`;
+    return days === 1 ? "24시간 무료 한도" : `${days}일 무료 한도`;
   }
 
   if (definition.freeTier.cycle === "monthly") {
